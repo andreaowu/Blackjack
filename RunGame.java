@@ -9,99 +9,103 @@ public class RunGame {
 		int numOfPlayers = 5;
 
 		BlackjackGame game = new BlackjackGame(numOfPlayers);
-		Queue<Integer> futurePlayerMoves = new LinkedList<Integer>();
-		Queue<Integer> winners = new LinkedList<Integer>();
-		Queue<Integer> stay = new LinkedList<Integer>();
+		Queue<Player> futurePlayerMoves = new LinkedList<Player>();
+		Queue<Player> winners = new LinkedList<Player>();
+		Queue<Player> stay = new LinkedList<Player>();
 		int busted = 0;
 		int total = 0;
-		HashSet<Integer> notBustedPlayers = new HashSet<Integer>();
+		HashSet<Player> notBustedPlayers = new HashSet<Player>();
 		boolean stopGame = false;
 		game.startGame();
 		
 		/* Put all players on the queue so everyone gets a turn */
-		for (int i = 0; i < numOfPlayers; i++) {
-			futurePlayerMoves.add(i);
-			notBustedPlayers.add(i);
-			total += i;
+		Player[] players = game.getPlayers();
+		for (int i = 0; i < players.length; i++) {
+			futurePlayerMoves.add(players[i]);
+			notBustedPlayers.add(players[i]);
+			total += i + 1;
 		}
 
 		while (!futurePlayerMoves.isEmpty()) {
-			int playerMove = futurePlayerMoves.remove();
-			if (winners.contains(playerMove))
+			Player player = futurePlayerMoves.remove();
+			if (winners.contains(player))
 				break;
-			if (game.askForMove(playerMove).equals(Constants.HIT)) {
-				STATUS turnEnd = game.hitMove(playerMove);
+			if (game.askForMove(player).equals(Globals.HIT)) {
+				STATUS turnEnd = game.hitMove(player);
 				switch (turnEnd) {
 				case CONTINUE:
-					futurePlayerMoves.add(playerMove);
+					futurePlayerMoves.add(player);
 					break;
 				case BUSTED:
-					busted += playerMove;
-					notBustedPlayers.remove(playerMove);
-					System.out.println("Player " + (playerMove + 1) + " busted!");
+					busted += player.getNumber();
+					notBustedPlayers.remove(player);
+					System.out.println("Player " + player.getNumber() + " busted!");
 					if (notBustedPlayers.size() == 1) {
-						int winner = total - busted;
+						int winner = total - busted - 1;
 						System.out.println("Player " + (winner + 1) + " won!");
 						stopGame = true;
 						break;
 					}
 					break;
 				case WINNER:
-					winners.add(playerMove);
-					futurePlayerMoves.add(playerMove);
+					winners.add(player);
+					futurePlayerMoves.add(player);
 				}
 			} else {
-				game.stayMove(playerMove);
-				stay.add(playerMove);
+				game.stayMove(player);
+				stay.add(player);
+				if (player.maxSumWithoutBust == 21) {
+					winners.add(player);
+				}
 			}
 
 			if (stopGame)
 				break;
-
-			/* Reset playerMove back to zero if it has reached the max player number */
-			if (playerMove == numOfPlayers - 1) {
-				playerMove = 0;
-			} else {
-				playerMove += 1;
-			}
 		}
 
 		if (winners.isEmpty()) {
-			System.out.println("Nobody got Blackjack but not everyone was busted!");
+			System.out.println("\nNobody got Blackjack but not everyone was busted!");
 			int max = -1;
-			int playerWinning = -1;
+			Player playerWinning = null;
 			boolean tie = false;
-			ArrayList<Integer> tieWinners = new ArrayList<Integer>(); 
+			ArrayList<Player> tieWinners = new ArrayList<Player>(); 
 			while (!stay.isEmpty()) {
-				int player = stay.remove();
-				int playerMax = game.maxSumWithoutBust(player); 
+				Player player = stay.remove();
+				int playerMax = player.getMaxSumWithoutBust(); 
 				if (playerMax > max) {
 					playerWinning = player;
 					max = playerMax;
 					tieWinners.clear();
 					tieWinners.add(player);
+					tie = false;
 				} else if (playerMax == max) {
 					tie = true;
 					tieWinners.add(player);
 				}
-				System.out.println("Player " + (player + 1) + " has score: " + playerMax);
+				System.out.println("Player " + player.getNumber() + " has score: " + playerMax);
 			}
 			
 			if (tie) {
 				String tiePrint = "Tie of score " + max + " between players ";
 				for (int i = 0; i < tieWinners.size(); i++) {
-					tiePrint += (tieWinners.get(i) + 1) + ", ";
+					tiePrint += tieWinners.get(i).getNumber() + ", ";
 				}
 				System.out.println(tiePrint.substring(0, tiePrint.length() - 2));
 				return;
 			}
 			
-			System.out.println("Player " + (playerWinning + 1) + " won!");
+			System.out.println("Player " + playerWinning.getNumber() + " won!");
 		}
 		
-		/* Print out winners */
-		while (!winners.isEmpty())
-			System.out.println("Player " + (winners.remove() + 1) + " won!");
-
+		if (winners.size() > 0) {
+			/* Print out winners */
+			String winnerPlayers = "";
+			if (winners.size() > 1) {
+				winnerPlayers += "More than one player got Blackjack!";
+			}
+			while (!winners.isEmpty())
+				winnerPlayers += "Player " + winners.remove().getNumber() + "won!";
+			System.out.println(winnerPlayers);
+		}
 	}
 }
