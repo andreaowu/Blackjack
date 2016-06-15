@@ -9,7 +9,7 @@ In the beginning, each player is dealt 2 cards. Any card 2-10 is worth that numb
 Implemented Game
 ===========
 ## Play Locally
-To deploy this locally, download the Blackjack.jar. Double click on it to run, or navigate to the folder where you downloaded it, and run 'java -jar Blackjack.jar'. <br>
+To deploy this locally, download the Blackjack.jar. Navigate to the folder where you downloaded it, and run 'java -jar Blackjack.jar'. <br>
 
 Once open, it will prompt for number of players. At least two players will have to play. <br>
 
