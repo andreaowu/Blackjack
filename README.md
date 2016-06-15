@@ -13,7 +13,7 @@ To deploy this locally, download the Blackjack.jar. Navigate to the folder where
 
 Once open, it will prompt for number of players. At least two players will have to play. <br>
 
-The console will print out the initial dealing of two cards for each player. Each player can then type in "hit" or "stay", and the console will print out the new hand of cards for that player along with the possible sums with that hand. Each player with a turn will continue to have a chance to type in "hit" or "stay". The program will automatically force a player to take "stay" if the player's hand has reached at least 21 points. After all players are on "stay", the program will then calculate the winner and print it in the console.
+The console will print out the initial dealing of two cards for each player. Each player can then type in "hit" or "stay", and the console will print out the new hand of cards for that player along with the possible sums with that hand. Each player with a turn will continue to have a chance to type in "hit" or "stay". The program will automatically force a player to take "stay" if the player's hand has reached at least 21 points, and everyone who hasn't gotten a turn that round yet gets their turn. After all players are on "stay", the program will then calculate the winner and print it in the console.
 
 Game Design
 ===========
