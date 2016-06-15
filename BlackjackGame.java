@@ -3,73 +3,146 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+
+/*
+ * Represents each Blackjack game. Keeps track of all the game variables 
+ * (including players, turns, etc), and does the actual game play.
+ * Calculates winners and ties according to cards in each player's hand.
+ */
 
 class BlackjackGame {
 
-	/* Set for players who have Aces
-	 * key: player number
-	 * value: number of Aces player has */
+	/* Players who still have a move left */
+	Queue<Player> futureTurn;
+	/* Players who have hit exactly 21 */
+	Queue<Player> winners;
+	/* Players who have opted to stay with their current hand */
+	Queue<Player> stay;
+	/* Players who have not been busted */
+	HashSet<Player> notBusted;
+	/* Sum of all player numbers who are busted */
+	int busted;
+	/* Sum of all player numbers */
+	int total;
+	/* Tells whether has ended */
+	boolean stopGame;
+	/* (Highest) Player number who got blackjack */
+	int winner;
+	/* Set for players who have Aces */
 	HashSet<Player> hasAces;
 	/* Deck of cards for this game */
 	Deck d;
+	/* All players in the game */
 	Player[] players;
+	/* Number of players in the game*/
 	int numOfPlayers;
 
 	/* 
 	 * Constructor for BlackjackGame
 	 *
 	 * Input: 
-	 * - givenNumOfPlayers: number of players for this game
+	 * - int givenNumOfPlayers: number of players for this game
+	 * 
+	 * Output:
+	 * - new BlackjackGame object
+	 * 
+	 * Results:
+	 * Instantiates all the variables and creates a list 
+	 * of players in this game. 
 	 */
 	public BlackjackGame(int numOfPlayers) {
-		this.numOfPlayers = numOfPlayers;
+
 		/* Instantiate all the variables */
+		futureTurn = new LinkedList<Player>();
+		winners = new LinkedList<Player>();
+		stay = new LinkedList<Player>();
+		notBusted = new HashSet<Player>();
+		busted = 0;
+		total = 0;
+		stopGame = false;
+		winner = 0;
 		hasAces = new HashSet<Player>();
 		d = new Deck(); 
 		players = new Player[numOfPlayers];
+		this.numOfPlayers = numOfPlayers;
+		
+		/* Make list of players in this game */
 		for (int i = 0; i < numOfPlayers; i++)
 			players[i] = new Player(i);
 	}
 
+	/* 
+	 * Starts the game
+	 *
+	 * Input: 
+	 * void
+	 * 
+	 * Output:
+	 * void
+	 * 
+	 * Results:
+	 * Gives each player two random cards from the deck.
+	 */
 	public void startGame() {
 		/* Loop through each player and give each two cards */
 		for (int i = 0; i < numOfPlayers; i++) {
 			Card c1 = d.getRandom();
 			Card c2 = d.getRandom();
-			
 			players[i].getCard(c1);
 			players[i].getCard(c2);
+			
+			players[i].printCards();
 		}
 	}
 
+	/* 
+	 * Gets called for when a player wants to "stay" (vs "hit")
+	 *
+	 * Input: 
+	 * - Player p: player who's taking the "stay" move
+	 * 
+	 * Output:
+	 * void
+	 * 
+	 * Results:
+	 * Prints out the cards and sum of cards of Player p. 
+	 */
 	public void stayMove(Player p) {
 		p.printCards();
 		p.printSums();
 	}
 
 	/* 
-	 * Gets another random card from the deck and returns it
-	 * Calculates the player's total and tells busted if so
-	 * Inputs:
-	 * - player: player number
-	 * Outputs:
-	 * - true: player can still continue playing
-	 * - false: player is busted
+	 * Gets called for when a player wants to "hit" (vs "stay")
+	 *
+	 * Input: 
+	 * - Player p: player who's taking the "hit" move
+	 * 
+	 * Output:
+	 * - STATUS: result of the player's hand from taking this move
+	 * 
+	 * Results:
+	 * Adds a card to the players hand, calculates sum, and determines
+	 * whether the player got Blackjack, went bust, or is still in the game.
 	 */
 	public STATUS hitMove(Player p) {
 
 		/* Get a new card */
 		Card newCard = d.getRandom();
-		
 		p.getCard(newCard);
 
 		/* Track whether all the possible sums are more than 21 */
 		Boolean allSumsExceed = null;
 		boolean win = false;
 		
+		/* Calculate new sum(s) for player */
 		ArrayList<Integer> allSums = p.getSums();
 		for (int i = 0; i < allSums.size(); i++) {
 			int sum = allSums.get(i);
+			
+			/* See whether the sum is bust or Blackjack or none */
 			if (sum > 21) {
 				if (allSumsExceed == null) 
 					allSumsExceed = true;
@@ -81,14 +154,14 @@ class BlackjackGame {
 			}
 		}
 
+		/* Print out cards and sums for player */
 		p.printCards();
 		p.printSums();
 
+		/* Check flags to determine player's game status */ 
 		if (win) {
 			return STATUS.WINNER;
-		}
-
-		if (allSumsExceed != null && allSumsExceed) {
+		} else if (allSumsExceed != null && allSumsExceed) {
 			return STATUS.BUSTED;
 		}
 
@@ -97,18 +170,28 @@ class BlackjackGame {
 	}
 
 	/* 
-	 * Asks for a move from the player
-	 * Input:
-	 * - player: player number
+	 * Asks player for the move they want to take on their turn.
+	 *
+	 * Input: 
+	 * - Player p: player who's deciding to "hit" or "stay"
+	 * 
+	 * Output:
+	 * - String: "hit" or "stay, whichever one Player p decided on
+	 * 
+	 * Results:
+	 * Keep asking for input from the player until the player 
+	 * says "hit" or "stay"
 	 */
 	public String askForMove(Player p) throws IOException {
-
+		/* Get input */
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String input;
+		
 		/* Prompt the user and show the cards they currently have */
 		System.out.println("");
 		p.printCards();
 		System.out.println("Player " + p.getNumber() + ": Hit or stay?");
+		
 		/* Read input from user */
 		input = br.readLine();
 
@@ -122,8 +205,213 @@ class BlackjackGame {
 		return input;
 	}
 	
+	/* 
+	 * Returns the list of all players in this game, regardless of whether 
+	 * they have won, busted, or got Blackjack.
+	 *
+	 * Input: 
+	 * void
+	 * 
+	 * Output:
+	 * - Player[]: list of Players playing this game
+	 * 
+	 */
 	public Player[] getPlayers() {
 		return players;
 	}
 
+	/* 
+	 * Goes through the game play.
+	 *
+	 * Input: 
+	 * void
+	 * 
+	 * Output:
+	 * void
+	 * 
+	 * Results:
+	 * Gives each player a turn and asks each player to "hit" or "stay" 
+	 * until the player has won, opted to "stay", or got busted. Prints out
+	 * winners and ties at the end of the game.
+	 */
+	public void playGame() throws IOException {
+		
+		/* Put all players in appropriate queues */
+		Player[] players = getPlayers();
+		for (int i = 0; i < players.length; i++) {
+			/* Everyone gets a turn */
+			futureTurn.add(players[i]);
+			
+			/* Nobody is busted yet */
+			notBusted.add(players[i]);
+			total += i + 1;
+		}
+
+		/* Keep going until all players have won, opted to stay, or busted */
+		while (!futureTurn.isEmpty()) {
+			/* Give player a turn */
+			Player player = futureTurn.remove();
+			
+			/* If a player already got Blackjack, finish that round to see
+			 * whether any other player will get Blackjack by the end of that
+			 * round. Nobody with player number less than the winner will 
+			 * get another turn. */
+			if (winner > 0 && player.getNumber() < winner) {
+				break;
+			}
+			
+			if (askForMove(player).equals(Globals.HIT)) {
+				/* Player opted for "hit" */
+				
+				/* Give a card to the player */
+				STATUS turnEnd = hitMove(player);
+				
+				switch (turnEnd) {
+				case CONTINUE:
+					/* Player got a card, is not bust, and did not get Blackjack 
+					 * Player will get another turn. */
+					futureTurn.add(player);
+					break;
+					
+				case BUSTED:
+					/* Player got a card and went over 21. */
+					busted += player.getNumber();
+					notBusted.remove(player);
+					System.out.println("Player " + player.getNumber() + " busted!");
+					
+					/* If only one player who is not busted is left in the 
+					 * game, that player won. */
+					if (notBusted.size() == 1) {
+						int playerWin = total - busted - 1;
+						System.out.println("Player " + (playerWin + 1) + " won!");
+						stopGame = true;
+						break;
+					}
+					break;
+					
+				case WINNER:
+					/* Player got Blackjack and is (one of) the winner(s) */
+					winner = player.getNumber();
+					winners.add(player);
+				}
+			} else {
+				/* Player opted for "stay" */
+				stayMove(player);
+				stay.add(player);
+				
+				/* The player won if their "stay" hand is Blackjack */
+				if (player.maxSumWithoutBust == 21) {
+					winners.add(player);
+				}
+			}
+
+			if (stopGame)
+				break;
+		}
+
+		nonBustedWinners(winners, stay);
+		blackjackWinners(winners);
+	}
+	
+	/* 
+	 * Calculates the winner if nobody got Blackjack but not everyone
+	 * went bust.
+	 *
+	 * Input: 
+	 * - Queue<Player> winners: list of players who got Blackjack
+	 * - Queue<Player> stay: list of players who did not get Blackjack and
+	 * 		opted to stay
+	 * 
+	 * Output:
+	 * void
+	 * 
+	 * Results:
+	 * Checks if there were any winners (players who got Blackjack). If not,
+	 * figures out the player who got the max sum of cards out of
+	 * the players who opted to stay (did not get Blackjack but did not go 
+	 * bust). Deals with ties as well. Prints out player(s) with highest
+	 * sum of cards in their hand.
+	 */
+	public static void nonBustedWinners(Queue<Player> winners, 
+			Queue<Player> stay) {
+		/* Nobody got Blackjack but not everyone was busted */
+		if (winners.isEmpty()) {
+			System.out.println("\nNobody got Blackjack but "
+					+ "not everyone was busted!");
+			/* Max sum of cards amongst players who weren't busted */
+			int max = -1;
+			/* Player with max sum of cards */
+			Player playerWinning = null;
+			/* Whether there's a tie */
+			boolean tie = false;
+			/* List of players with the tie */
+			ArrayList<Player> tieWinners = new ArrayList<Player>();
+
+			/* Check through all non-busted players and get player with
+			 * highest score */
+			while (!stay.isEmpty()) {
+				Player player = stay.remove();
+				int playerMax = player.getMaxSumWithoutBust();
+
+				if (playerMax > max) {
+					/* Found player with higher sum */
+					playerWinning = player;
+					max = playerMax;
+
+					/* Reset all tie-related variables */
+					tieWinners.clear();
+					tieWinners.add(player);
+					tie = false;
+				} else if (playerMax == max) {
+					/* Found another player with highest sum */
+					tie = true;
+					tieWinners.add(player);
+				}
+				System.out.println("Player " + player.getNumber() + " has score: " + playerMax);
+			}
+
+			/* Print out for tie case */
+			if (tie) {
+				String tiePrint = "Tie of score " + max + " between players ";
+				for (int i = 0; i < tieWinners.size(); i++) {
+					tiePrint += tieWinners.get(i).getNumber() + ", ";
+				}
+				System.out.println(tiePrint.substring(0, tiePrint.length() - 2));
+				return;
+			}
+			/* Print out for one-winner case */
+			System.out.println("Player " + playerWinning.getNumber() + " won!");
+		}
+	}
+	
+	/* 
+	 * Displays all winners (players who got Blackjack).
+	 *
+	 * Input: 
+	 * - Queue<Player> winners: list of players who got Blackjack
+	 * 
+	 * Output:
+	 * void
+	 * 
+	 * Results:
+	 * Iterates through winners and prints out each player's number.
+	 */
+	public static void blackjackWinners(Queue<Player> winners) {
+		/* At least one player got Blackjack */
+		if (winners.size() > 0) {
+			/* Print out winners */
+			String winnerPlayers = "";
+
+			/* More than one player got Blackjack */
+			if (winners.size() > 1) {
+				winnerPlayers += "More than one player got Blackjack!";
+			}
+
+			/* Print all players who got Blackjack */
+			while (!winners.isEmpty())
+				winnerPlayers += "Player " + winners.remove().getNumber() + "won!";
+			System.out.println(winnerPlayers);
+		}
+	}
+	
 }

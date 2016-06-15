@@ -1,5 +1,10 @@
 import java.util.Hashtable;
 
+/*
+ * Represents each card in the game. Each card has a number and a suit, as
+ * do normal playing cards.
+ */
+
 class Card {
 
 	/* Represents the value of the card, can be: 1-13 */
@@ -16,9 +21,16 @@ class Card {
 
 	/* 
 	 * Constructor for Card class
+	 * 
 	 * Input:
 	 * - givenNumber: numerical value of the card
 	 * - givenSuit: suit of the card
+	 * 
+	 * Output:
+	 * None
+	 * 
+	 * Result:
+	 * Creates card with given number and suit
 	 */
 	public Card(int number, String suit) {
 		this.number = number;
@@ -37,29 +49,73 @@ class Card {
 		numToLetter.put(13, "K");
 	}
 
-	/* Returns the numerical value of this card */
+	/* 
+	 * Getter function for card number
+	 *
+	 * Input: 
+	 * void
+	 * 
+	 * Output:
+	 * - int: card number
+	 * 
+	 */
 	public int getNumber() {
 		return number;
 	}
 
-	/* Returns the suit of this card */
+	/* 
+	 * Getter function for suit of the card
+	 *
+	 * Input: 
+	 * void
+	 * 
+	 * Output:
+	 * - String: suit of the card
+	 * 
+	 */
 	public String getSuit() {
 		return suit;
 	}
 
-	/* Returns the value of this card */
+	/* 
+	 * Getter function for card value, as some card numbers don't map to
+	 * their value (ie card with number 11 maps to card value 10, not 11).
+	 *
+	 * Input: 
+	 * void
+	 * 
+	 * Output:
+	 * - int: card value
+	 * 
+	 */
 	public int getValue() {
 		return value;
 	}
 
-	/* Prints out the card */
+	/* 
+	 * Prints out the number and suit of this card
+	 *
+	 * Input: 
+	 * void
+	 * 
+	 * Output:
+	 * - String: number and suit of this card
+	 *
+	 * Result:
+	 * Translates the number into the appropriate card representation 
+	 * (ie 11 translates to "J", 1 to "A", etc)
+	 */
 	public String printInfo() {
+		
 		String printNum;
+		
+		/* Find proper representation of card number */
 		if (number > 1 && number < 11) {
 			printNum = "" + number;
 		} else {
 			printNum = numToLetter.get(number);
 		}
+		
 		return "" + printNum + " of " + suit;
 	}
 

@@ -1,111 +1,71 @@
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.io.InputStreamReader;
 
+/* 
+ * Class to run the entire application. 
+ */
 public class RunGame {
+	
 	public static void main(String[] args) throws IOException {
-		int numOfPlayers = 5;
-
+		
+		/* Number of players playing the game */
+		int numOfPlayers = getNumOfPlayers();
+		
+		/* Create game for players */ 
 		BlackjackGame game = new BlackjackGame(numOfPlayers);
-		Queue<Player> futurePlayerMoves = new LinkedList<Player>();
-		Queue<Player> winners = new LinkedList<Player>();
-		Queue<Player> stay = new LinkedList<Player>();
-		int busted = 0;
-		int total = 0;
-		HashSet<Player> notBustedPlayers = new HashSet<Player>();
-		boolean stopGame = false;
+		
+		/* Start the game and give each player two cards */
 		game.startGame();
 		
-		/* Put all players on the queue so everyone gets a turn */
-		Player[] players = game.getPlayers();
-		for (int i = 0; i < players.length; i++) {
-			futurePlayerMoves.add(players[i]);
-			notBustedPlayers.add(players[i]);
-			total += i + 1;
-		}
-
-		while (!futurePlayerMoves.isEmpty()) {
-			Player player = futurePlayerMoves.remove();
-			if (winners.contains(player))
+		/* Let's play! */
+		game.playGame();
+	}
+	
+	/* 
+	 * Asks for the number of players
+	 *
+	 * Input: 
+	 * void
+	 * 
+	 * Output:
+	 * - int: number of players for the game
+	 * 
+	 * Results:
+	 * Continuously prompts the user for the number of players until user
+	 * provides a number greater than 1.
+	 */
+	public static int getNumOfPlayers() {
+		int numOfPlayers = 0;
+		
+		/* Ask for number of players */
+		BufferedReader br = 
+				new BufferedReader(new InputStreamReader(System.in));
+		System.out.println("How many players are playing?");
+		
+		/* Keep asking for number of players until 
+		 * an integer greater than 1 is entered */
+		while (true) {
+			try {
+				numOfPlayers = Integer.parseInt(br.readLine());
+				if (numOfPlayers < 2) {
+					System.out.println("Too few players; at least two people" +
+									   " will play.");
+					continue;
+				}
 				break;
-			if (game.askForMove(player).equals(Globals.HIT)) {
-				STATUS turnEnd = game.hitMove(player);
-				switch (turnEnd) {
-				case CONTINUE:
-					futurePlayerMoves.add(player);
-					break;
-				case BUSTED:
-					busted += player.getNumber();
-					notBustedPlayers.remove(player);
-					System.out.println("Player " + player.getNumber() + " busted!");
-					if (notBustedPlayers.size() == 1) {
-						int winner = total - busted - 1;
-						System.out.println("Player " + (winner + 1) + " won!");
-						stopGame = true;
-						break;
-					}
-					break;
-				case WINNER:
-					winners.add(player);
-					futurePlayerMoves.add(player);
-				}
-			} else {
-				game.stayMove(player);
-				stay.add(player);
-				if (player.maxSumWithoutBust == 21) {
-					winners.add(player);
-				}
+			} catch (NumberFormatException e) {
+				System.out.println("The argument entered is not a number. " +
+								   "Try again.");
+				System.out.println("Please enter the number of players.");
+			} catch (IOException e) {
+				System.out.println("Cannot read input, try again.");
+			} catch (Exception e) {
+				System.out.println("Error occurred, please try again and "
+						+ "enter the number of players.");
 			}
-
-			if (stopGame)
-				break;
-		}
-
-		if (winners.isEmpty()) {
-			System.out.println("\nNobody got Blackjack but not everyone was busted!");
-			int max = -1;
-			Player playerWinning = null;
-			boolean tie = false;
-			ArrayList<Player> tieWinners = new ArrayList<Player>(); 
-			while (!stay.isEmpty()) {
-				Player player = stay.remove();
-				int playerMax = player.getMaxSumWithoutBust(); 
-				if (playerMax > max) {
-					playerWinning = player;
-					max = playerMax;
-					tieWinners.clear();
-					tieWinners.add(player);
-					tie = false;
-				} else if (playerMax == max) {
-					tie = true;
-					tieWinners.add(player);
-				}
-				System.out.println("Player " + player.getNumber() + " has score: " + playerMax);
-			}
-			
-			if (tie) {
-				String tiePrint = "Tie of score " + max + " between players ";
-				for (int i = 0; i < tieWinners.size(); i++) {
-					tiePrint += tieWinners.get(i).getNumber() + ", ";
-				}
-				System.out.println(tiePrint.substring(0, tiePrint.length() - 2));
-				return;
-			}
-			
-			System.out.println("Player " + playerWinning.getNumber() + " won!");
 		}
 		
-		if (winners.size() > 0) {
-			/* Print out winners */
-			String winnerPlayers = "";
-			if (winners.size() > 1) {
-				winnerPlayers += "More than one player got Blackjack!";
-			}
-			while (!winners.isEmpty())
-				winnerPlayers += "Player " + winners.remove().getNumber() + "won!";
-			System.out.println(winnerPlayers);
-		}
+		return numOfPlayers;
 	}
 }
