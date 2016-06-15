@@ -4,7 +4,7 @@ import java.util.Arrays;
 /*
  * Represents each player. Every player has a unique ID, which is unique per
  * BlackjackGame. Also holds all the cards and everything connected to that,
- * most importantly sums of the cards. Aces are taken account in the sums.
+ * most importantly points of the cards. Aces are taken account in the points.
  */
 public class Player {
 	
@@ -12,16 +12,16 @@ public class Player {
 	int id;
 	/* Cards in hand */
 	ArrayList<Card> cards;
-	/* All possible sums of all cards in hard */
-	ArrayList<Integer> possibleSums;
+	/* All possible point totals of all cards in hard */
+	ArrayList<Integer> possiblePointTotals;
 	/* String to print out cards */
 	String displayCards;
 	/* Number of Aces in hand */
 	int numOfAces;
-	/* Sum if there are no Aces in hand */
-	int sum;
-	/* Max sum of hand without going bust */
-	int maxSumWithoutBust;
+	/* Points if there are no Aces in hand */
+	int points;
+	/* Max points of hand without going bust */
+	int maxPointsWithoutBust;
 
 	/* 
 	 * Constructor for Player class
@@ -38,11 +38,11 @@ public class Player {
 	public Player(int number) {
 		this.id = number + 1;
 		cards = new ArrayList<Card>();
-		possibleSums = new ArrayList<Integer>();
+		possiblePointTotals = new ArrayList<Integer>();
 		displayCards = "Player " + (number + 1) + " has these cards: ";
 		numOfAces = 0;
-		sum = 0;
-		maxSumWithoutBust = 0;
+		points = 0;
+		maxPointsWithoutBust = 0;
 	}
 	
 	/* 
@@ -70,8 +70,8 @@ public class Player {
 	 * 
 	 * Results:
 	 * The card gets added to player's hand and display string. The new
-	 * sum is calculated, and if the new card is an Ace, new sums are 
-	 * calculated. The maximum sum is re-calculated and set each time a new
+	 * points is calculated, and if the new card is an Ace, new points are 
+	 * calculated. The maximum points is re-calculated and set each time a new
 	 * card is received.
 	 */
 	public void getCard(Card c) {
@@ -84,145 +84,145 @@ public class Player {
 
 			/* New card is an Ace, increment counter */
 			numOfAces += 1;
-			ArrayList<Integer> newSums = new ArrayList<Integer>();
-			maxSumWithoutBust = -1;
+			ArrayList<Integer> newPoints = new ArrayList<Integer>();
+			maxPointsWithoutBust = -1;
 			
 			/* This is the first Ace encountered */
-			if (possibleSums.size() == 0) {
-				newSums = addForAce(sum);
+			if (possiblePointTotals.size() == 0) {
+				newPoints = addForAce(points);
 			} else {
 				/* This is the second Ace encountered, so 
-				 * there's already a list of possible sums from which
-				 * to calculate the new list of possible sums */
-				for (int i = 0; i < possibleSums.size(); i++) {
-					int sum = possibleSums.get(i);
-					newSums = addForAce(sum);
+				 * there's already a list of possible points from which
+				 * to calculate the new list of possible points */
+				for (int i = 0; i < possiblePointTotals.size(); i++) {
+					int points = possiblePointTotals.get(i);
+					newPoints = addForAce(points);
 				}
 			}
 			
-			/* Set possible sums to new array of calculated sums */
-			possibleSums = newSums;
+			/* Set possible points to new array of calculated points */
+			possiblePointTotals = newPoints;
 			
 		} else {
 			/* New card is not an Ace */
 			
 			if (numOfAces == 0) {
 				/* No Aces in hand*/
-				sum += c.getValue();
-				setMaxSumWithoutBust(sum);
+				points += c.getValue();
+				setMaxPointsWithoutBust(points);
 			} else {
 				/* At least one Ace in hand */
 				
-				/* Iterate through all currently possible sums and add new
-				 * card value to each possible sum. Find new maximum sum
-				 * that doesn't go bust in the list of possible sums */
-				for (int i = 0; i < possibleSums.size(); i++) {
-					sum = possibleSums.get(i);
-					possibleSums.set(i, sum + c.getValue());
-					setMaxSumWithoutBust(sum);
+				/* Iterate through all currently possible point totals and 
+				 * add new card value to each possible points. Find new maximum
+				 * points that don't go bust in the list of possible points */
+				for (int i = 0; i < possiblePointTotals.size(); i++) {
+					points = possiblePointTotals.get(i);
+					possiblePointTotals.set(i, points + c.getValue());
+					setMaxPointsWithoutBust(points);
 				}
 			}
 		}
 	}
 	
 	/* 
-	 * Updates all possible sums list for this player when an Ace gets added
+	 * Updates all possible points list for this player when an Ace gets added
 	 * to the hand.
 	 *
 	 * Input: 
-	 * - int existingSum: sum already calculated from other cards in hand
+	 * - int existingPoints: points already calculated from other cards in hand
 	 * 
 	 * Output:
-	 * - ArrayList<Integer>: list of possible sums with an Ace added to the
-	 * 		sum given as input 
+	 * - ArrayList<Integer>: list of possible points with an Ace added to the
+	 * 		points given as input 
 	 * 
 	 * Results:
-	 * Creates a new list of sums to be calculated. Takes the given number and
-	 * adds 1 and 11 to it, finds the new maximum sum without bust, then 
-	 * finally returns these new sums in a list.
+	 * Creates a new list of points to be calculated. Takes given number and
+	 * adds 1 and 11 to it, finds the new maximum points without bust, then 
+	 * finally returns these new points in a list.
 	 */
-	public ArrayList<Integer> addForAce(int existingSum) {
+	public ArrayList<Integer> addForAce(int existingPointTotal) {
 		/* New list to return */
-		ArrayList<Integer> newSums = new ArrayList<Integer>();
+		ArrayList<Integer> newPoints = new ArrayList<Integer>();
 		
-		/* Add Ace values to existing sum */
-		int addOne = existingSum + 1;
-		int addEleven = existingSum + 11;
+		/* Add Ace values to existing points */
+		int addOne = existingPointTotal + 1;
+		int addEleven = existingPointTotal + 11;
 		
-		/* Add new sums to the list */
-		newSums.add(addOne);
-		newSums.add(addEleven);
+		/* Add new points to the list */
+		newPoints.add(addOne);
+		newPoints.add(addEleven);
 		
-		/* Calculate the maximum sum without busting using these new sums */
-		setMaxSumWithoutBust(addEleven);
-		setMaxSumWithoutBust(addOne);
+		/* Calculate the maximum points without busting using these new points */
+		setMaxPointsWithoutBust(addEleven);
+		setMaxPointsWithoutBust(addOne);
 		
-		/* Return the lits of new sums with the Ace added */
-		return newSums;
+		/* Return the list of new points with the Ace added */
+		return newPoints;
 	}
 	
 	/* 
-	 * Sets the new maximum sum of the cards in player's hand without 
+	 * Sets the new maximum points of the cards in player's hand without 
 	 * going bust.
 	 *
 	 * Input: 
-	 * - int sum: number to be checked against current maximum sum without 
+	 * - int points: number to be checked against current maximum points without 
 	 * 		going bust
 	 * 
 	 * Output:
 	 * void
 	 * 
 	 * Results:
-	 * Sees whether the new sum is greater than 21; if it is, set it as the new
-	 * maximum sum without going bust. Otherwise, change the max to -1 so the
+	 * Sees whether the new points are greater than 21; if it is, set it as the new
+	 * maximum points without going bust. Otherwise, change the max to -1 so the
 	 * player becomes busted.
 	 */
-	public void setMaxSumWithoutBust(int sum) {
-		if (sum <= 21) {
-			if (sum > maxSumWithoutBust)
-				maxSumWithoutBust = sum;
+	public void setMaxPointsWithoutBust(int points) {
+		if (points <= 21) {
+			if (points > maxPointsWithoutBust)
+				maxPointsWithoutBust = points;
 		} else {
-			if (maxSumWithoutBust > 0)
-				maxSumWithoutBust = -1;
+			if (maxPointsWithoutBust > 0)
+				maxPointsWithoutBust = -1;
 		}
 	}
 	
 	/* 
-	 * Getter function for maxSumWithoutBust
+	 * Getter function for maxpointsWithoutBust
 	 *
 	 * Input: 
 	 * void
 	 * 
 	 * Output:
-	 * - int: maximum sum of cards for this player that isn't over 21
+	 * - int: maximum point total of cards for this player that isn't over 21
 	 * 
 	 */
-	public int getMaxSumWithoutBust() {
-		return maxSumWithoutBust;
+	public int getMaxPointsWithoutBust() {
+		return maxPointsWithoutBust;
 	}
 	
 	/* 
-	 * Getter function for sums
+	 * Getter function for points
 	 *
 	 * Input: 
 	 * void
 	 * 
 	 * Output:
-	 * - ArrayList<Integer>: list of sums
+	 * - ArrayList<Integer>: list of points
 	 * 
 	 * Results:
 	 * If the player has at least one Ace, it returns the list of possible
-	 * sums. Otherwise, it creates a new list for the one possible sum and
+	 * points. Otherwise, it creates a new list for the one possible points and
 	 * returns that. 
 	 */
-	public ArrayList<Integer> getSums() {
+	public ArrayList<Integer> getPoints() {
 		
 		/* Check if player has more than one Ace */
 		if (numOfAces > 0)
-			return possibleSums;
+			return possiblePointTotals;
 		
-		/* Return new list with just the one sum */
-		return new ArrayList<Integer>(Arrays.asList(sum));
+		/* Return new list with just the one points */
+		return new ArrayList<Integer>(Arrays.asList(points));
 	}
 	
 	/* 
@@ -240,7 +240,7 @@ public class Player {
 	}
 	
 	/* 
-	 * Prints out possible sum of all cards in player's hand
+	 * Prints out possible points of all cards in player's hand
 	 *
 	 * Input: 
 	 * void
@@ -249,25 +249,25 @@ public class Player {
 	 * void
 	 * 
 	 * Results:
-	 * Makes a string out of all possible sum of cards in player's hand,
+	 * Makes a string out of all possible points of cards in player's hand,
 	 * then prints the string out.
 	 */
-	public void printSums() {
+	public void printPoints() {
 		
 		/* Start all strings the same way */
-		String possibleSumsString = "Possible sums: ";
+		String possiblePointsString = "Possible points: ";
 		
 		if (numOfAces == 0) {
-			/* No Aces in hand, so concatenate sum into the possible sums */
-			possibleSumsString += sum;
+			/* No Aces in hand, so concatenate points into the possible points */
+			possiblePointsString += points;
 		} else {
-			/* Aces in hand, iterate through all possible sums for printing */
-			for (int i = 0; i < possibleSums.size(); i++)  {
-				possibleSumsString += possibleSums.get(i) + ", ";
+			/* Aces in hand, iterate through all possible points for printing */
+			for (int i = 0; i < possiblePointTotals.size(); i++)  {
+				possiblePointsString += possiblePointTotals.get(i) + ", ";
 			}
-			possibleSumsString = Globals.deleteComma(possibleSumsString);
+			possiblePointsString = Globals.deleteComma(possiblePointsString);
 		}
 		
-		System.out.println(possibleSumsString);
+		System.out.println(possiblePointsString);
 	}
 }

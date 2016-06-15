@@ -1,8 +1,8 @@
 /*
  * STATUS for the outcome of the player's move.
- * WINNER means the sum of all player's cards adds up to exactly 21.
- * BUSTED means the sum of all player's cards adds up to more than 21.
- * CONTINUE means the sum of all player's cards adds up to less than 21.
+ * WINNER means the points of all player's cards adds up to exactly 21.
+ * BUSTED means the points of all player's cards adds up to more than 21.
+ * CONTINUE means the points of all player's cards adds up to less than 21.
  */
 enum STATUS { 
   WINNER, BUSTED, CONTINUE 

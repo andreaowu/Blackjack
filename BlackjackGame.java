@@ -21,10 +21,10 @@ class BlackjackGame {
 	/* Players who have opted to stay with their current hand */
 	Queue<Player> stay;
 	/* Players who have not been busted */
-	HashSet<Player> notBusted;
-	/* Sum of all player numbers who are busted */
+	Queue<Player> notBusted;
+	/* points of all player numbers who are busted */
 	int busted;
-	/* Sum of all player numbers */
+	/* points of all player numbers */
 	int total;
 	/* Tells whether has ended */
 	boolean stopGame;
@@ -58,7 +58,7 @@ class BlackjackGame {
 		futureTurn = new LinkedList<Player>();
 		winners = new LinkedList<Player>();
 		stay = new LinkedList<Player>();
-		notBusted = new HashSet<Player>();
+		notBusted = new LinkedList<Player>();
 		busted = 0;
 		total = 0;
 		stopGame = false;
@@ -107,11 +107,11 @@ class BlackjackGame {
 	 * void
 	 * 
 	 * Results:
-	 * Prints out the cards and sum of cards of Player p. 
+	 * Prints out the cards and points of cards of Player p. 
 	 */
 	public void stayMove(Player p) {
 		p.printCards();
-		p.printSums();
+		p.printPoints();
 	}
 
 	/* 
@@ -124,7 +124,7 @@ class BlackjackGame {
 	 * - STATUS: result of the player's hand from taking this move
 	 * 
 	 * Results:
-	 * Adds a card to the players hand, calculates sum, and determines
+	 * Adds a card to the players hand, calculates points, and determines
 	 * whether the player got Blackjack, went bust, or is still in the game.
 	 */
 	public STATUS hitMove(Player p) {
@@ -133,35 +133,35 @@ class BlackjackGame {
 		Card newCard = d.getRandom();
 		p.getCard(newCard);
 
-		/* Track whether all the possible sums are more than 21 */
-		Boolean allSumsExceed = null;
+		/* Track whether all the possible points are more than 21 */
+		Boolean allpointsExceed = null;
 		boolean win = false;
 		
-		/* Calculate new sum(s) for player */
-		ArrayList<Integer> allSums = p.getSums();
-		for (int i = 0; i < allSums.size(); i++) {
-			int sum = allSums.get(i);
+		/* Calculate new points(s) for player */
+		ArrayList<Integer> allpoints = p.getPoints();
+		for (int i = 0; i < allpoints.size(); i++) {
+			int points = allpoints.get(i);
 			
-			/* See whether the sum is bust or Blackjack or none */
-			if (sum > 21) {
-				if (allSumsExceed == null) 
-					allSumsExceed = true;
-			} else if (sum == 21) {
+			/* See whether the points is bust or Blackjack or none */
+			if (points > 21) {
+				if (allpointsExceed == null) 
+					allpointsExceed = true;
+			} else if (points == 21) {
 				win = true;
 				break;
 			} else {
-				allSumsExceed = false;
+				allpointsExceed = false;
 			}
 		}
 
-		/* Print out cards and sums for player */
+		/* Print out cards and points for player */
 		p.printCards();
-		p.printSums();
+		p.printPoints();
 
 		/* Check flags to determine player's game status */ 
 		if (win) {
 			return STATUS.WINNER;
-		} else if (allSumsExceed != null && allSumsExceed) {
+		} else if (allpointsExceed != null && allpointsExceed) {
 			return STATUS.BUSTED;
 		}
 
@@ -252,14 +252,6 @@ class BlackjackGame {
 			/* Give player a turn */
 			Player player = futureTurn.remove();
 			
-			/* If a player already got Blackjack, finish that round to see
-			 * whether any other player will get Blackjack by the end of that
-			 * round. Nobody with player number less than the winner will 
-			 * get another turn. */
-			if (winner > 0 && player.getNumber() < winner) {
-				break;
-			}
-			
 			if (askForMove(player).equals(Globals.HIT)) {
 				/* Player opted for "hit" */
 				
@@ -277,8 +269,7 @@ class BlackjackGame {
 					/* Player got a card and went over 21. */
 					busted += player.getNumber();
 					notBusted.remove(player);
-					System.out.println("Player " + player.getNumber() + " busted!");
-					
+						
 					/* If only one player who is not busted is left in the 
 					 * game, that player won. */
 					if (notBusted.size() == 1) {
@@ -293,14 +284,16 @@ class BlackjackGame {
 					/* Player got Blackjack and is (one of) the winner(s) */
 					winner = player.getNumber();
 					winners.add(player);
+					break;
 				}
+				
 			} else {
 				/* Player opted for "stay" */
 				stayMove(player);
 				stay.add(player);
 				
 				/* The player won if their "stay" hand is Blackjack */
-				if (player.maxSumWithoutBust == 21) {
+				if (player.maxPointsWithoutBust == 21) {
 					winners.add(player);
 				}
 			}
@@ -308,9 +301,11 @@ class BlackjackGame {
 			if (stopGame)
 				break;
 		}
-
-		nonBustedWinners(winners, stay);
-		blackjackWinners(winners);
+		
+		if (!stopGame) {
+			nonBustedWinners(winners, notBusted);
+			blackjackWinners(winners);
+		}
 	}
 	
 	/* 
@@ -319,28 +314,27 @@ class BlackjackGame {
 	 *
 	 * Input: 
 	 * - Queue<Player> winners: list of players who got Blackjack
-	 * - Queue<Player> stay: list of players who did not get Blackjack and
-	 * 		opted to stay
+	 * - Queue<Player> notBusted: set of players who did not get busted
 	 * 
 	 * Output:
 	 * void
 	 * 
 	 * Results:
 	 * Checks if there were any winners (players who got Blackjack). If not,
-	 * figures out the player who got the max sum of cards out of
+	 * figures out the player who got the max points of cards out of
 	 * the players who opted to stay (did not get Blackjack but did not go 
 	 * bust). Deals with ties as well. Prints out player(s) with highest
-	 * sum of cards in their hand.
+	 * points of cards in their hand.
 	 */
 	public static void nonBustedWinners(Queue<Player> winners, 
-			Queue<Player> stay) {
+			Queue<Player> notBusted) {
 		/* Nobody got Blackjack but not everyone was busted */
 		if (winners.isEmpty()) {
 			System.out.println("\nNobody got Blackjack but "
 					+ "not everyone was busted!");
-			/* Max sum of cards amongst players who weren't busted */
+			/* Max points of cards amongst players who weren't busted */
 			int max = -1;
-			/* Player with max sum of cards */
+			/* Player with max points of cards */
 			Player playerWinning = null;
 			/* Whether there's a tie */
 			boolean tie = false;
@@ -349,12 +343,13 @@ class BlackjackGame {
 
 			/* Check through all non-busted players and get player with
 			 * highest score */
-			while (!stay.isEmpty()) {
-				Player player = stay.remove();
-				int playerMax = player.getMaxSumWithoutBust();
+			
+			while (!notBusted.isEmpty()) {
+				Player player = notBusted.poll();
+				int playerMax = player.getMaxPointsWithoutBust();
 
 				if (playerMax > max) {
-					/* Found player with higher sum */
+					/* Found player with higher points */
 					playerWinning = player;
 					max = playerMax;
 
@@ -363,7 +358,7 @@ class BlackjackGame {
 					tieWinners.add(player);
 					tie = false;
 				} else if (playerMax == max) {
-					/* Found another player with highest sum */
+					/* Found another player with highest points */
 					tie = true;
 					tieWinners.add(player);
 				}
@@ -409,7 +404,7 @@ class BlackjackGame {
 
 			/* Print all players who got Blackjack */
 			while (!winners.isEmpty())
-				winnerPlayers += "Player " + winners.remove().getNumber() + "won!";
+				winnerPlayers += "Player " + winners.remove().getNumber() + " won!";
 			System.out.println(winnerPlayers);
 		}
 	}
